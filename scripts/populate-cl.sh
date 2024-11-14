@@ -1,6 +1,7 @@
 #!/bin/bash
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 cd $SCRIPT_DIR
+source $SCRIPT_DIR/local-addresses.sh
 docker compose exec link-main-node chainlink admin login -f /chainlink/.api
 docker compose exec link-main-node chainlink admin status
 docker compose exec link-main-node chainlink bridges create '{
@@ -11,7 +12,6 @@ docker compose exec link-main-node chainlink bridges create '{
 }'
 docker compose exec link-main-node chainlink jobs create /chainlink/chainnode/node-api1.toml
 
-export OPERATOR_HPC=0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
 export NODE_ETH_ADDRESS=`docker compose exec link-main-node chainlink keys eth list | grep Address: | awk '{print $2}'`
 npx hardhat run ./initialize-operator.ts --network localhost
 
