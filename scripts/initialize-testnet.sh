@@ -2,7 +2,7 @@
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $SCRIPT_DIR/..
-source $SCRIPT_DIR/scripts/local-addresses.sh
+. $SCRIPT_DIR/local-addresses.sh
 
 # Define a function to clean up and kill all children
 cleanup_and_exit() {

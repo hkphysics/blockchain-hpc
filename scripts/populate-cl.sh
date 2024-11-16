@@ -1,7 +1,8 @@
 #!/bin/bash
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 cd $SCRIPT_DIR
-source $SCRIPT_DIR/local-addresses.sh
+. $SCRIPT_DIR/local-addresses.sh
+
 docker compose exec link-main-node chainlink admin login -f /chainlink/.api
 docker compose exec link-main-node chainlink admin status
 docker compose exec link-main-node chainlink bridges create '{
