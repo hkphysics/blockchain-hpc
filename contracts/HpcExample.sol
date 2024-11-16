@@ -34,14 +34,14 @@ contract HpcExample is Initializable, OwnableUpgradeable, HpcClient {
         string memory keypath_,
         string memory abi_,
         string memory multiplier_) public returns (bytes32 requestId) {
-          Chainlink.Request memory req = buildChainlinkRequest(
+          Chainlink.Request memory req = _buildChainlinkRequest(
             bytes32(bytes(jobId)),
             address(this), this.fulfillBytes.selector);
-        req.add("service", service_);
-        req.add("data", data_);
-        req.add("keypath", keypath_);
-        req.add("abi", abi_);
-        req.add("multiplier", multiplier_);
+        req._add("service", service_);
+        req._add("data", data_);
+        req._add("keypath", keypath_);
+        req._add("abi", abi_);
+        req._add("multiplier", multiplier_);
         return sendChainlinkRequestTo(oracleId, req, fee);
     }
 
@@ -54,15 +54,15 @@ contract HpcExample is Initializable, OwnableUpgradeable, HpcClient {
         uint256 fee_) public returns (bytes32 requestId) {
         require(LinkTokenInterface(getToken()).transferFrom(
                msg.sender, address(this), fee_), 'transfer failed');
-        Chainlink.Request memory req = buildChainlinkRequest(
+        Chainlink.Request memory req = _buildChainlinkRequest(
             bytes32(bytes(jobId)),
             address(this), this.fulfillBytes.selector);
-        req.add("service", service_);
-        req.add("data", data_);
-        req.add("keypath", keypath_);
-        req.add("abi", abi_);
-        req.add("multiplier", multiplier_);
-        req.add("refundTo",
+        req._add("service", service_);
+        req._add("data", data_);
+        req._add("keypath", keypath_);
+        req._add("abi", abi_);
+        req._add("multiplier", multiplier_);
+        req._add("refundTo",
                 Strings.toHexString(uint160(msg.sender), 20));
         return sendChainlinkRequestTo(oracleId, req, fee_);
     }

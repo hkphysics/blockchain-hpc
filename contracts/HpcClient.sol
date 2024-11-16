@@ -51,13 +51,13 @@ abstract contract HpcClient {
    * @param callbackFunctionSignature function signature to use for the callback
    * @return A Chainlink Request struct in memory
    */
-  function buildChainlinkRequest(
+  function _buildChainlinkRequest(
     bytes32 specId,
     address callbackAddr,
     bytes4 callbackFunctionSignature
   ) internal pure returns (Chainlink.Request memory) {
     Chainlink.Request memory req;
-    return req.initialize(specId, callbackAddr, callbackFunctionSignature);
+    return req._initialize(specId, callbackAddr, callbackFunctionSignature);
   }
 
   /**
@@ -72,7 +72,7 @@ abstract contract HpcClient {
     returns (Chainlink.Request memory)
   {
     Chainlink.Request memory req;
-    return req.initialize(specId, address(this), callbackFunctionSignature);
+    return req._initialize(specId, address(this), callbackFunctionSignature);
   }
 
   /**
