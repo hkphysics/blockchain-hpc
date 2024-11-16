@@ -22,7 +22,7 @@ contract HpcExample is Initializable, OwnableUpgradeable, HpcClient {
       address token_) public initializer {
         __Ownable_init();
         __HpcClient_init();
-        setChainlinkToken(token_);
+        _setChainlinkToken(token_);
         oracleId = oracleId_;
         jobId = jobId_;
         fee = fee_;
@@ -42,7 +42,7 @@ contract HpcExample is Initializable, OwnableUpgradeable, HpcClient {
         req._add("keypath", keypath_);
         req._add("abi", abi_);
         req._add("multiplier", multiplier_);
-        return sendChainlinkRequestTo(oracleId, req, fee);
+        return _sendChainlinkRequestTo(oracleId, req, fee);
     }
 
     function doTransferAndRequest(
@@ -64,7 +64,7 @@ contract HpcExample is Initializable, OwnableUpgradeable, HpcClient {
         req._add("multiplier", multiplier_);
         req._add("refundTo",
                 Strings.toHexString(uint160(msg.sender), 20));
-        return sendChainlinkRequestTo(oracleId, req, fee_);
+        return _sendChainlinkRequestTo(oracleId, req, fee_);
     }
 
     function fulfillBytes(bytes32 _requestId, bytes memory bytesData)
@@ -86,11 +86,11 @@ contract HpcExample is Initializable, OwnableUpgradeable, HpcClient {
     }
 
     function changeToken(address _address) public onlyOwner {
-        setChainlinkToken(_address);
+        _setChainlinkToken(_address);
     }
 
     function getToken() public view returns (address) {
-        return chainlinkTokenAddress();
+        return _chainlinkTokenAddress();
     }
 
     function getChainlinkToken() public view returns (address) {
@@ -98,7 +98,7 @@ contract HpcExample is Initializable, OwnableUpgradeable, HpcClient {
     }
 
     function withdrawLink() public onlyOwner {
-        LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
+        LinkTokenInterface link = LinkTokenInterface(_chainlinkTokenAddress());
             require(link.transfer(msg.sender, link.balanceOf(address(this))), "Unable to transfer");
     }
 

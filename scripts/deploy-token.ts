@@ -8,6 +8,9 @@ async function main (): void {
     await Token.deploy()
 
   await token.waitForDeployment()
+  const [owner] = await ethers.getSigners()
+  await token.grantMintAndBurnRoles(owner)
+  await token.mint(owner, BigInt("100000000000000000000000"))
   console.log(`${name} deployed to ${await token.getAddress()}`)
 }
 

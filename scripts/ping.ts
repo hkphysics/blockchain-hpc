@@ -13,7 +13,7 @@ async function main (): void {
     const HpcToken = await ethers.getContractFactory('HpcToken')
     const hpcToken = HpcToken.attach(tokenAddress)
     const tokens = console.log(
-        await hpcToken.balances(owner)
+        await hpcToken.balanceOf(owner)
     )
     const fee = BigInt("10000000000000000")
     const tx1 = await hpcToken.approve(contractAddress, fee)
