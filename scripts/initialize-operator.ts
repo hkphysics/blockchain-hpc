@@ -17,6 +17,11 @@ async function main (): void {
       value: ethers.parseEther("10.0"), // Sends exactly 1.0 ether
     });
     await tx1.wait()
+    const Token = await ethers.getContractFactory('HpcToken')
+    const token = Token.attach(await hpcOperator.getChainlinkToken())
+    await token.grantMintAndBurnRoles(owner)
+    await token.mint(owner, BigInt("100000000000000000000000"))
+    console.log(`${name} deployed to ${await token.getAddress()}`)
 }
 
 // We recommend this pattern to be able to use async/await everywhere

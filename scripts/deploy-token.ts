@@ -8,7 +8,6 @@ async function main (): void {
     await Token.deploy()
 
   await token.waitForDeployment()
-  console.log(`${name} deployed to ${await token.getAddress()}`)
 }
 
 // We recommend this pattern to be able to use async/await everywhere

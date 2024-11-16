@@ -5,5 +5,5 @@ mkdir -p log
 docker compose down
 docker volume rm blockchain-hpc_pg_data
 docker compose up >& log/blockchain.log &
-sleep 30
+sleep 60
 $SCRIPT_DIR/populate-cl.sh

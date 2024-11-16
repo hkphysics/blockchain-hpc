@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.7.0;
+pragma solidity 0.8.19;
 
 // HPC: make contract upgradeable
-import "@chainlink/contracts/src/v0.7/AuthorizedReceiver.sol";
-import "./vendor/LinkTokenReceiver.sol";
+import "@chainlink/contracts/src/v0.8/operatorforwarder/AuthorizedReceiver.sol";
+import "@chainlink/contracts/src/v0.8/operatorforwarder/LinkTokenReceiver.sol";
 import "./vendor/ConfirmedOwnerUpgradeable.sol";
-import "@chainlink/contracts/src/v0.7/interfaces/LinkTokenInterface.sol";
-import "@chainlink/contracts/src/v0.7/interfaces/OperatorInterface.sol";
+import "@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/OperatorInterface.sol";
 import "./interfaces/OwnableInterface.sol";
-import "@chainlink/contracts/src/v0.7/interfaces/WithdrawalInterface.sol";
-import "./vendor/AddressUpgradeable.sol";
-import "@chainlink/contracts/src/v0.7/vendor/SafeMathChainlink.sol";
+import "@chainlink/contracts/src/v0.8/operatorforwarder/interfaces/IWithdrawal.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 /** Truflation changes
 /** search for HPC for the places where there are changes */
@@ -25,9 +24,8 @@ import "@chainlink/contracts/src/v0.7/vendor/SafeMathChainlink.sol";
  */
 contract HpcOperator is AuthorizedReceiver,
 ConfirmedOwnerUpgradeable, LinkTokenReceiver,
-OperatorInterface, WithdrawalInterface {
+OperatorInterface, IWithdrawal {
   using AddressUpgradeable for address;
-  using SafeMathChainlink for uint256;
 
   struct Commitment {
     bytes31 paramsHash;
@@ -286,10 +284,10 @@ OperatorInterface, WithdrawalInterface {
     public
     validateAuthorizedSenderSetter
   {
-    TargetsUpdatedAuthorizedSenders(targets, senders, msg.sender);
+    emit TargetsUpdatedAuthorizedSenders(targets, senders, msg.sender);
 
     for (uint256 i = 0; i < targets.length; i++) {
-      AuthorizedReceiverInterface(targets[i]).setAuthorizedSenders(senders);
+      IAuthorizedReceiver(targets[i]).setAuthorizedSenders(senders);
     }
   }
 
@@ -317,7 +315,7 @@ OperatorInterface, WithdrawalInterface {
    */
   function withdraw(address recipient, uint256 amount)
     external
-    override(OracleInterface, WithdrawalInterface)
+    override(OracleInterface, IWithdrawal)
     onlyOwner
     validateAvailableFunds(amount)
   {
@@ -329,7 +327,7 @@ OperatorInterface, WithdrawalInterface {
    * @dev We use `ONE_FOR_CONSISTENT_GAS_COST` in place of 0 in storage
    * @return The amount of withdrawable LINK on the contract
    */
-  function withdrawable() external view override(OracleInterface, WithdrawalInterface) returns (uint256) {
+  function withdrawable() external view override(OracleInterface, IWithdrawal) returns (uint256) {
     return _fundsAvailable();
   }
 
@@ -374,7 +372,7 @@ OperatorInterface, WithdrawalInterface {
     uint256 valueRemaining = msg.value;
     for (uint256 i = 0; i < receivers.length; i++) {
       uint256 sendAmount = amounts[i];
-      valueRemaining = valueRemaining.sub(sendAmount);
+      valueRemaining = valueRemaining - sendAmount;
       receivers[i].transfer(sendAmount);
     }
     require(valueRemaining == 0, "Too much ETH sent");
@@ -479,10 +477,10 @@ OperatorInterface, WithdrawalInterface {
     requestId = keccak256(abi.encodePacked(sender, nonce));
     require(s_commitments[requestId].paramsHash == 0, "Must use a unique ID");
     // solhint-disable-next-line not-rely-on-time
-    expiration = block.timestamp.add(getExpiryTime);
+    expiration = block.timestamp + getExpiryTime;
     bytes31 paramsHash = _buildParamsHash(payment, callbackAddress, callbackFunctionId, expiration);
     s_commitments[requestId] = Commitment(paramsHash, _safeCastToUint8(dataVersion));
-    s_tokensInEscrow = s_tokensInEscrow.add(payment);
+    s_tokensInEscrow = s_tokensInEscrow + payment;
     return (requestId, expiration);
   }
 
@@ -506,7 +504,7 @@ OperatorInterface, WithdrawalInterface {
     require(s_commitments[requestId].paramsHash == paramsHash, "Params do not match request ID");
     require(s_commitments[requestId].dataVersion <= _safeCastToUint8(dataVersion), "Data versions must match");
     // HPC
-    s_tokensInEscrow = s_tokensInEscrow.sub(payment).add(s_refunds[requestId]);
+    s_tokensInEscrow = s_tokensInEscrow - payment + s_refunds[requestId];
     delete s_commitments[requestId];
   }
 
@@ -542,8 +540,8 @@ OperatorInterface, WithdrawalInterface {
    * @return uint256 LINK tokens available
    */
   function _fundsAvailable() private view returns (uint256) {
-    uint256 inEscrow = s_tokensInEscrow.sub(ONE_FOR_CONSISTENT_GAS_COST);
-    return linkToken.balanceOf(address(this)).sub(inEscrow);
+    uint256 inEscrow = s_tokensInEscrow - ONE_FOR_CONSISTENT_GAS_COST;
+    return linkToken.balanceOf(address(this)) - inEscrow;
   }
 
   /**
@@ -696,7 +694,7 @@ OperatorInterface, WithdrawalInterface {
     if (refund == 0) {
       return;
     }
-    s_tokensInEscrow = s_tokensInEscrow.sub(refund);
+    s_tokensInEscrow = s_tokensInEscrow - refund;
     delete s_refunds[requestId];
     assert(linkToken.transfer(recipient, refund));
   }
