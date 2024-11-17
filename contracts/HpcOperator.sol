@@ -7,7 +7,7 @@ import "@chainlink/contracts/src/v0.8/operatorforwarder/LinkTokenReceiver.sol";
 import "./vendor/ConfirmedOwnerUpgradeable.sol";
 import "@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/OperatorInterface.sol";
-import "./interfaces/OwnableInterface.sol";
+import "@chainlink/contracts/src/v0.8/shared/interfaces/IOwnable.sol";
 import "@chainlink/contracts/src/v0.8/operatorforwarder/interfaces/IWithdrawal.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
@@ -256,7 +256,7 @@ OperatorInterface, IWithdrawal {
   function transferOwnableContracts(address[] calldata ownable, address newOwner) external onlyOwner {
     for (uint256 i = 0; i < ownable.length; i++) {
       s_owned[ownable[i]] = false;
-      OwnableInterface(ownable[i]).transferOwnership(newOwner);
+      IOwnable(ownable[i]).transferOwnership(newOwner);
     }
   }
 
@@ -271,7 +271,7 @@ OperatorInterface, IWithdrawal {
     for (uint256 i = 0; i < ownable.length; i++) {
       s_owned[ownable[i]] = true;
       emit OwnableContractAccepted(ownable[i]);
-      OwnableInterface(ownable[i]).acceptOwnership();
+      IOwnable(ownable[i]).acceptOwnership();
     }
   }
 

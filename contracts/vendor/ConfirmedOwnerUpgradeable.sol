@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >= 0.7.0;
+pragma solidity ^0.8.0;
 
-import "../interfaces/OwnableInterface.sol";
-
-/** use internal initializer because to allow use with 0.7.0 solidity */
+import "@chainlink/contracts/src/v0.8/shared/interfaces/IOwnable.sol";
 
 /**
  * @title The ConfirmedOwnerUpgradeable contract
  * @notice A contract with helpers for basic contract ownership.
  */
-contract ConfirmedOwnerUpgradeable is OwnableInterface {
+contract ConfirmedOwnerUpgradeable is IOwnable {
   bool private initialized;
   address private myOwner;
   address private pendingOwner;
