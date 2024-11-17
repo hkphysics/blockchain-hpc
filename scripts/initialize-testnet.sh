@@ -3,6 +3,7 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $SCRIPT_DIR/..
 . $SCRIPT_DIR/local-addresses.sh
+STATE_FILE=./state/state.json
 
 # Define a function to clean up and kill all children
 cleanup_and_exit() {
@@ -10,13 +11,17 @@ cleanup_and_exit() {
     pgrep -P $$ | xargs kill
 }
 
-(npx hardhat node --hostname 0.0.0.0) &
-
-echo "node started waiting...."
-sleep 3
-(npx hardhat --network localhost run ./scripts/deploy-token.ts)
-(npx hardhat --network localhost run ./scripts/deploy-operator.ts)
-(npx hardhat --network localhost run ./scripts/deploy-example.ts)
+if [ -s $STATE_FILE ]; then
+    echo "node started with state file...."
+    /root/.foundry/bin/anvil --host 0.0.0.0 --load-state $STATE_FILE --dump-state $STATE_FILE &
+else
+    /root/.foundry/bin/anvil --host 0.0.0.0 --dump-state $STATE_FILE &
+    echo "node started waiting...."
+    sleep 3
+    (npx hardhat --network localhost run ./scripts/deploy-token.ts)
+    (npx hardhat --network localhost run ./scripts/deploy-operator.ts)
+    (npx hardhat --network localhost run ./scripts/deploy-example.ts)
+fi
 
 # Trap interrupts and call our cleanup function
 trap "cleanup_and_exit" INT  # Ctrl+C

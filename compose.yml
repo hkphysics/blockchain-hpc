@@ -21,6 +21,8 @@ services:
             context: .
             dockerfile: Dockerfile
         command: bash ./scripts/initialize-testnet.sh
+        volumes:
+          - hardhat_state:/usr/src/app/state
         ports:
           - "8545:8545"
     pg-chainlink:
@@ -80,4 +82,4 @@ volumes:
    ipfs_fuse:
    ipns_fuse:
    pg_data:
-
+   hardhat_state:

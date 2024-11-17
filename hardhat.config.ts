@@ -1,6 +1,7 @@
 import type { HardhatUserConfig } from "hardhat/config";
 import '@openzeppelin/hardhat-upgrades'
 import "@nomicfoundation/hardhat-toolbox-viem";
+import "@foundry-rs/hardhat-anvil";
 
 import * as dotenv from 'dotenv'
 dotenv.config()
