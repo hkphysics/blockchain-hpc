@@ -8,13 +8,20 @@ import eth_utils
 import cbor2
 import eth_abi
 import uvicorn
+import ipfs_api
+import ipfshttpclient2
 from fastapi import Request, FastAPI
 
 from executor.fees import get_fee
 
 app = FastAPI()
-api_adapter = os.getenv('TRUFLATION_API_HOST', 'http://api-adapter:8081')
 logger = logging.getLogger('uvicorn.error')
+api_adapter = os.getenv('TRUFLATION_API_HOST', 'http://api-adapter:8081')
+ipfs_host = os.getenv('IPFS_HOST', '/dns/localhost/tcp/5001/http')
+
+def ipfs_connect():
+    logger.debug(ipfs_host)
+    return ipfshttpclient2.client.connect(ipfs_host)
 
 def decode_response(content):
     content_str =  content.decode('utf-8') if hasattr(content, 'decode') \
@@ -46,7 +53,7 @@ def hello_world():
     return "<h2>Hello, World!</h2>"
 
 
-def process_request_api1(content, handler):
+async def process_request_api1(content, handler):
     logger.debug(content)
     oracle_request = content['meta']['oracleRequest']
     log_data = oracle_request['data']
@@ -87,7 +94,7 @@ def process_request_api1(content, handler):
                 payment
             ])
     else:
-        content = handler(obj)
+        content = await handler(obj)
         encode_large = eth_abi.encode(
             ['bytes32', 'bytes'],
             [from_hex(request_id),
@@ -116,22 +123,31 @@ def process_request_api1(content, handler):
         "tx1": process_refund
     }
 
+async def json_handler(obj):
+    if obj['service'] == 'ping':
+        return obj['data']
+    if obj['service'] == 'ipfs':
+        logger.debug('processing IPFS')
+        ipfs_client = ipfs_connect()
+        data = ipfs_client.dag.get(obj['data'])
+        logger.debug(data)
+        return data
+    r = requests.post(api_adapter, json=obj)
+    return r.content
 
 @app.post("/api1")
 async def api1(request: Request):
-    def handler(obj):
-        if obj['service'] == 'ping':
-            return obj['data']
-        r = requests.post(api_adapter, json=obj)
-        return r.content
-    return process_request_api1(await request.json(), handler)
+    return await process_request_api1(await request.json(), json_handler)
 
+@app.post("/api1-handler")
+async def api1_handler(request: Request):
+    return await json_handler(await request.json())
 
 @app.post("/api1-test")
 async def api1_test(request: Request):
-    def handler(obj):
+    async def handler(obj):
         return obj.get('data', '')
-    return process_request_api1(await request.json(), handler)
+    return await process_request_api1(await request.json(), handler)
 
 
 @app.post("/api0")

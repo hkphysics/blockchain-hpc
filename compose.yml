@@ -49,6 +49,7 @@ services:
             dockerfile: Dockerfile
         environment:
             - ORDERS_LOGLEVEL=debug
+            - IPFS_HOST=/dns/ipfs/tcp/5001/http
         ports:
             - "8000:8000"
     quantragrpc:

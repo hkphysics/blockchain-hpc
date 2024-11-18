@@ -10,7 +10,8 @@ dependencies = [
     "requests",
     "fastapi",
     "httpx",
-    "eth-hash[pycryptodome]"
+    "eth-hash[pycryptodome]",
+    "IPFS-Toolkit"
 ]
 
 [tool.pytest.ini_options]
