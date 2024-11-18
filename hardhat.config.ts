@@ -1,7 +1,8 @@
-import type { HardhatUserConfig } from "hardhat/config";
+import type { HardhatUserConfig } from "hardhat/config"
 import '@openzeppelin/hardhat-upgrades'
-import "@nomicfoundation/hardhat-toolbox-viem";
-import "@foundry-rs/hardhat-anvil";
+import '@nomicfoundation/hardhat-toolbox-viem'
+import '@foundry-rs/hardhat-anvil'
+import '@kodex-data/hardhat-ipfs'
 
 import * as dotenv from 'dotenv'
 dotenv.config()
@@ -16,6 +17,11 @@ const config: HardhatUserConfig = {
         url: 'http://localhost:8545/',
 	accounts: [TESTNET_PRIVATE_KEY]
       }
+  },
+  ipfs: {
+    host: 'localhost',
+    port: 5001,
+    protocol: 'http'
   },
   solidity: {
     compilers: [
