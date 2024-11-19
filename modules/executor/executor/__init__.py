@@ -10,7 +10,9 @@ import eth_abi
 import uvicorn
 import ipfs_api
 import ipfshttpclient2
+import json
 from fastapi import Request, FastAPI
+from io import StringIO
 
 from executor.fees import get_fee
 
@@ -124,14 +126,25 @@ async def process_request_api1(content, handler):
     }
 
 async def json_handler(obj):
-    if obj['service'] == 'ping':
+    if obj['service'] == 'ping' and obj['data'][:4] != 'cid:':
         return obj['data']
-    if obj['service'] == 'ipfs':
-        logger.debug('processing IPFS')
+    if obj['data'][:4] == "cid:":
+        logger.debug('processing CID')
+        cid = obj['data'][4:]
         ipfs_client = ipfs_connect()
-        data = ipfs_client.dag.get(obj['data'])
+        data = ipfs_client.dag.get(obj['data'][4:]).as_json()
         logger.debug(data)
-        return data
+        if obj['service'] == 'ipfs':
+            logger.debug('processing IPFS')
+            ipfs_client = ipfs_connect()
+            data = ipfs_client.dag.get(obj['data'][4:]).as_json()
+            logger.debug(data)
+            return data
+        if obj['service'] != "ping":
+            r = requests.post(obj['service'], json=data).json()
+        else:
+            r = data
+        return "cid:" + ipfs_client.dag.put(StringIO(json.dumps(r)))['Cid']["/"]
     r = requests.post(api_adapter, json=obj)
     return r.content
 
