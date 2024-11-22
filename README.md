@@ -11,6 +11,10 @@ To run:
 ./scripts/reset-testnet.sh - sets up a clean test net
 EXAMPLE_CONTRACT=0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9 npx hardhat run scripts/ping.ts --network localhost
 
+Once the system has been reset, the servers can be restarted.
+
+docker compose restart
+
 Contributors:
 
 Thanks to the follow projects for helping with development

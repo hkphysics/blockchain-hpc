@@ -141,7 +141,7 @@ async def json_handler(obj):
             logger.debug(data)
             return data
         if obj['service'] != "ping":
-            r = requests.post(obj['service'], json=data).json()
+            r = requests.post("http://" + obj['service'], json=data).json()
         else:
             r = data
         return "cid:" + ipfs_client.dag.put(StringIO(json.dumps(r)))['Cid']["/"]
