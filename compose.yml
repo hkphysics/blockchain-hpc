@@ -52,6 +52,13 @@ services:
             - IPFS_HOST=/dns/ipfs/tcp/5001/http
         ports:
             - "8000:8000"
+    quantlib_server:
+        container_name: quantlib_server
+        build:
+            context: modules/quantlib_server
+            dockerfile: Dockerfile
+        ports:
+            - "8002:8000"
     quantragrpc:
         image: "joequant/quantragrpc:latest"
         container_name: quantragrpc

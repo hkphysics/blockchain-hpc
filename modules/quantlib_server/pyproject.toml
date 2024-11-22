@@ -18,7 +18,10 @@ classifiers = [
 ]
 license = {text = "BSD license"}
 dependencies = [
-  
+    "pytest",
+    "uvicorn",
+    "fastapi",
+    "pydantic-quantlib"
 ]
 
 [project.optional-dependencies]
