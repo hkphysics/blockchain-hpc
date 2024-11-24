@@ -35,13 +35,6 @@ services:
             - "database.env"
         volumes:
             - "pg_data:/var/lib/postgressql/data/"
-    rpc-failover:
-        restart: unless-stopped
-        container_name: rpc-failover
-        image: "fiews/cl-eth-failover"
-        command: "wss://goerli.infura.io/ws/v3/<api-key>"
-        ports:
-          - "4000:4000"
     executor:
         container_name: executor
         build:
@@ -52,13 +45,6 @@ services:
             - IPFS_HOST=/dns/ipfs/tcp/5001/http
         ports:
             - "8000:8000"
-    quantlib_server:
-        container_name: quantlib_server
-        build:
-            context: modules/quantlib_server
-            dockerfile: Dockerfile
-        ports:
-            - "8002:8000"
     quantragrpc:
         image: "joequant/quantragrpc:latest"
         container_name: quantragrpc
@@ -83,7 +69,6 @@ services:
         command: "node  -config /chainlink/config.toml -secrets /chainlink/secrets.toml start -p /chainlink/.password -a /chainlink/.api"
         depends_on:
             - "pg-chainlink"
-            - "rpc-failover"
             - "hardhat"
 volumes:
    ipfs_path:
