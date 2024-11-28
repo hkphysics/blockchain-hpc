@@ -45,12 +45,13 @@ services:
             - IPFS_HOST=/dns/ipfs/tcp/5001/http
         ports:
             - "8000:8000"
+        volumes:
+            - "/var/run/docker.sock:/var/run/docker.sock"
     quantragrpc:
         image: "joequant/quantragrpc:latest"
         container_name: quantragrpc
         build:
             context: https://github.com/joequant/quantragrpc.git
-        command: "/root/quantragrpc/build/jsonserver/json_server 0.0.0.0 8001"
         ports:
             - "8001:8001"
     link-main-node:

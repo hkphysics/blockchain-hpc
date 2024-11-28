@@ -11,7 +11,8 @@ dependencies = [
     "fastapi",
     "httpx",
     "eth-hash[pycryptodome]",
-    "IPFS-Toolkit"
+    "IPFS-Toolkit",
+    "docker"
 ]
 
 [tool.pytest.ini_options]

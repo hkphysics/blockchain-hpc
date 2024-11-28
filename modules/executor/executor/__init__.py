@@ -11,6 +11,7 @@ import uvicorn
 import ipfs_api
 import ipfshttpclient2
 import json
+import docker
 from fastapi import Request, FastAPI
 from io import StringIO
 
@@ -21,9 +22,13 @@ logger = logging.getLogger('uvicorn.error')
 api_adapter = os.getenv('TRUFLATION_API_HOST', 'http://api-adapter:8081')
 ipfs_host = os.getenv('IPFS_HOST', '/dns/localhost/tcp/5001/http')
 
+
 def ipfs_connect():
     logger.debug(ipfs_host)
     return ipfshttpclient2.client.connect(ipfs_host)
+
+def docker_connect():
+    return docker.from_env()
 
 def decode_response(content):
     content_str =  content.decode('utf-8') if hasattr(content, 'decode') \
@@ -128,6 +133,26 @@ async def process_request_api1(content, handler):
 async def json_handler(obj):
     if obj['service'] == 'ping' and obj['data'][:4] != 'cid:':
         return obj['data']
+    if obj['service'] == 'container-pull':
+        logger.debug('processing docker')
+        client = docker_connect()
+        try:
+            client.images.pull(obj['data'])
+        except docker.errors.APIError:
+            logger.warning('Error pulling data')
+        try:
+            container = client.containers.run(
+                obj['data'], detach=True,
+                name=obj['data'].split("/")[-1],
+                network='blockchain-hpc_default')
+            logger.debug(container)
+        except docker.errors.APIError:
+            logger.warning('Error running docker image')
+            try:
+                client.containers.get(obj['data'].split("/")[-1]).restart()
+            except docker.errors.APIError:
+                logger.warning('Error restart')
+        return {}
     if obj['data'][:4] == "cid:":
         logger.debug('processing CID')
         cid = obj['data'][4:]
