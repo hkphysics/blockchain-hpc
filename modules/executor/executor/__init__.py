@@ -136,20 +136,22 @@ async def json_handler(obj):
     if obj['service'] == 'container-pull':
         logger.debug('processing docker')
         client = docker_connect()
+        image = obj['data']
+        name = image.replace("/", "_")
         try:
-            client.images.pull(obj['data'])
+            client.images.pull(image)
         except docker.errors.APIError:
             logger.warning('Error pulling data')
         try:
             container = client.containers.run(
-                obj['data'], detach=True,
-                name=obj['data'].split("/")[-1],
-                network='blockchain-hpc_default')
+                image, detach=True,
+                name=name,
+                network='blockchain-hpc')
             logger.debug(container)
         except docker.errors.APIError:
             logger.warning('Error running docker image')
             try:
-                client.containers.get(obj['data'].split("/")[-1]).restart()
+                client.containers.get(name).restart()
             except docker.errors.APIError:
                 logger.warning('Error restart')
         return {}

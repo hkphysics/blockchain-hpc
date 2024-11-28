@@ -77,3 +77,7 @@ volumes:
    ipns_fuse:
    pg_data:
    hardhat_state:
+
+networks:
+  default:
+    name: blockchain-hpc
