@@ -131,49 +131,49 @@ async def process_request_api1(content, handler):
     }
 
 async def json_handler(obj):
+    if obj.get('service') is None or obj.get('data') is None:
+        return {}
     if obj['service'] == 'ping' and obj['data'][:4] != 'cid:':
         return obj['data']
     if obj['service'] == 'container-pull':
-        logger.debug('processing docker')
-        client = docker_connect()
         image = obj['data']
         name = image.replace("/", "_")
+        logger.debug('processing docker')
+        client = docker_connect()
         try:
+            client.images.get(image)
+        except docker.errors.APIError:
+            logger.warning('Error pulling data image')
             client.images.pull(image)
-        except docker.errors.APIError:
-            logger.warning('Error pulling data')
         try:
-            container = client.containers.run(
-                image, detach=True,
-                name=name,
-                network='blockchain-hpc')
-            logger.debug(container)
+            if name not in client.containers.list(
+                    all=True, filters={'name': name }
+            ):
+                container = client.containers.run(
+                    image, detach=True,
+                    name=name,
+                    network='blockchain-hpc')
+                logger.debug(container)
         except docker.errors.APIError:
-            logger.warning('Error running docker image')
-            try:
-                client.containers.get(name).restart()
-            except docker.errors.APIError:
-                logger.warning('Error restart')
+            logger.warning('Error running data image')
         return {}
-    if obj['data'][:4] == "cid:":
+    if isinstance(obj['data'], str) and obj['data'][:4] == "cid:":
         logger.debug('processing CID')
         cid = obj['data'][4:]
         ipfs_client = ipfs_connect()
         data = ipfs_client.dag.get(obj['data'][4:]).as_json()
         logger.debug(data)
-        if obj['service'] == 'ipfs':
-            logger.debug('processing IPFS')
-            ipfs_client = ipfs_connect()
-            data = ipfs_client.dag.get(obj['data'][4:]).as_json()
-            logger.debug(data)
-            return data
-        if obj['service'] != "ping":
-            r = requests.post("http://" + obj['service'], json=data).json()
-        else:
-            r = data
-        return "cid:" + ipfs_client.dag.put(StringIO(json.dumps(r)))['Cid']["/"]
-    r = requests.post(api_adapter, json=obj)
-    return r.content
+    else:
+        data = obj['data']
+    if obj['service'] != "ping":
+        r = requests.post(f"http://{obj['service']}", json=data).json()
+    else:
+        r = data
+    if obj.get('abi') == "ipfs":
+        return "cid:" + ipfs_client.dag.put(
+            StringIO(json.dumps(r))
+        )['Cid']["/"]
+    return r
 
 @app.post("/api1")
 async def api1(request: Request):
