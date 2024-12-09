@@ -20,17 +20,15 @@ async function main (): void {
     )
     const fee = BigInt("10000000000000000")
     const tx1 = await hpcToken.approve(contractAddress, fee)
-/*
     const tx = await hpcExample.doTransferAndRequest(
-	"ipfs",
+	"joequant_quantragrpc:8001/price-floating-rate-bond",
 	"cid:" + cid.toString(),
 	"",
-	"cbor",
+	"ipfs",
 	"10000000000000000000",
 	fee
     )
     await tx.wait()
-    */
 }
 
 // We recommend this pattern to be able to use async/await everywhere

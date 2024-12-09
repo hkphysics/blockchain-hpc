@@ -74,6 +74,7 @@ async def process_request_api1(content, handler):
     fee = get_fee(obj)
     # should reject request but some networks require polling
     if payment < fee:
+        logger.debug('insufficient fee')
         """
         encode_tx = encode_function(
             'rejectOracleRequest(bytes32,uint256,address,bytes4,uint256,address)', [
@@ -101,6 +102,7 @@ async def process_request_api1(content, handler):
                 payment
             ])
     else:
+        logger.debug('running handler')
         content = await handler(obj)
         encode_large = eth_abi.encode(
             ['bytes32', 'bytes'],
@@ -131,6 +133,7 @@ async def process_request_api1(content, handler):
     }
 
 async def json_handler(obj):
+    logger.debug("running json_handler")
     if obj.get('service') is None or obj.get('data') is None:
         return {}
     if obj['service'] == 'ping' and obj['data'][:4] != 'cid:':
