@@ -104,6 +104,8 @@ async def process_request_api1(content, handler):
     else:
         logger.debug('running handler')
         content = await handler(obj)
+        content = content.encode('utf-8') \
+            if isinstance(content, str) else content
         encode_large = eth_abi.encode(
             ['bytes32', 'bytes'],
             [from_hex(request_id),
