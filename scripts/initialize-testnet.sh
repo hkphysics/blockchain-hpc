@@ -21,6 +21,7 @@ else
     (npx hardhat --network localhost run ./scripts/deploy-token.ts)
     (npx hardhat --network localhost run ./scripts/deploy-operator.ts)
     (npx hardhat --network localhost run ./scripts/deploy-example.ts)
+    (npx hardhat --network localhost run ./scripts/deploy-validator.ts)
 fi
 
 # Trap interrupts and call our cleanup function

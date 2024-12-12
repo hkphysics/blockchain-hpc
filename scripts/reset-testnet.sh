@@ -6,6 +6,6 @@ rm -f state/state.json
 docker compose down
 docker volume rm blockchain-hpc_pg_data
 docker volume rm blockchain-hpc_hardhat_state
-docker compose up >& log/blockchain.log &
+docker compose up >& log/blockchain-$(date +%Y%m%d%H%M%S -u).log &
 sleep 60
 $SCRIPT_DIR/populate-cl.sh
