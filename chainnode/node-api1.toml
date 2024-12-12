@@ -8,10 +8,11 @@ contractAddress = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
 minContractPaymentLinkJuels = "0"
 observationSource = """
 fetch [type="bridge" name="executor" requestData="$(jobRun)"]
+to [type="jsonparse" data="$(fetch)" path="to"]
 tx0 [type="jsonparse" data="$(fetch)" path="tx0"]
 tx1 [type="jsonparse" data="$(fetch)" path="tx1"]
-submit_tx0  [type="ethtx" to="0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0" data="$(tx0)" minConfirmations="1"]
-submit_tx1  [type="ethtx" to="0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0" data="$(tx1)" minConfirmations="1"]
+submit_tx0  [type="ethtx" to="$(to)" data="$(tx0)" minConfirmations="0"]
+submit_tx1  [type="ethtx" to="$(to)" data="$(tx1)" minConfirmations="0"]
 
-fetch -> tx0 -> tx1 -> submit_tx0 -> submit_tx1
+fetch -> to -> tx0 -> tx1 -> submit_tx0 -> submit_tx1
 """

@@ -63,6 +63,7 @@ def hello_world():
 async def process_request_api1(content, handler):
     logger.debug(content)
     oracle_request = content['meta']['oracleRequest']
+    log_address = content['logAddress']
     log_data = oracle_request['data']
     request_id = oracle_request['requestId']
     payment = int(oracle_request['payment'])
@@ -130,6 +131,7 @@ async def process_request_api1(content, handler):
             from_hex(refund_addr)
         ])
     return {
+        "to": obj.get("to", log_address),
         "tx0": encode_tx,
         "tx1": process_refund
     }
