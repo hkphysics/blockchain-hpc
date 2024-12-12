@@ -1,4 +1,4 @@
-FROM node:22-bookworm
+FROM node:23-bookworm
 COPY . /usr/src/app
 WORKDIR /usr/src/app
 RUN apt-get install git bash curl && \
