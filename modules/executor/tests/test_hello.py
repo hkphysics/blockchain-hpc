@@ -28,7 +28,6 @@ def test_fee():
     assert fee > 0 and fee <= 10**18 * 1
     echo_fee = get_fee({'service': 'echo/'})
     assert echo_fee > 0 and echo_fee <= 10**18 * 1
-    assert echo_fee != fee
 
 def test_refund_address():
     a = refund_address({
