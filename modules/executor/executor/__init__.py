@@ -8,7 +8,6 @@ import eth_utils
 import cbor2
 import eth_abi
 import uvicorn
-import ipfs_api
 import ipfshttpclient2
 import json
 import docker
@@ -23,21 +22,21 @@ api_adapter = os.getenv('TRUFLATION_API_HOST', 'http://api-adapter:8081')
 ipfs_host = os.getenv('IPFS_HOST', '/dns/localhost/tcp/5001/http')
 
 
-def ipfs_connect():
+def ipfs_connect() -> ipfshttpclient2.Client:
     logger.debug(ipfs_host)
     return ipfshttpclient2.client.connect(ipfs_host)
 
-def docker_connect():
+def docker_connect() -> docker.DockerClient:
     return docker.from_env()
 
-def decode_response(content):
+def decode_response(content) -> bytes:
     content_str =  content.decode('utf-8') if hasattr(content, 'decode') \
         else content
     if re.match('^0x[A-Fa-f0-9]+$', content_str):
         return from_hex(content_str)
     return content
 
-def encode_function(signature, parameters):
+def encode_function(signature: str, parameters: list) -> str:
     params_list = signature.split("(")[1]
     param_types = params_list.replace(")", "").replace(" ", "").split(",")
     func_sig = eth_utils.function_signature_to_4byte_selector(
@@ -46,21 +45,19 @@ def encode_function(signature, parameters):
     encode_tx = eth_abi.encode(param_types, parameters)
     return "0x" + func_sig.hex() + encode_tx.hex()
 
-def from_hex(x):
-    return bytes.fromhex(x[2:])
+def from_hex(x : str) -> bytes:
+    return bytes.fromhex(x[2:]) if x.startswith('0x') else x
 
-def refund_address(obj, default):
-    refund_addr = obj.get('refundTo', None)
-    if refund_addr is None or not eth_utils.is_hex_address(refund_addr):
-        refund_addr = default
-    return refund_addr
+def refund_address(obj: dict, default: str) -> str:
+    return obj.get('refundTo') or default \
+        if eth_utils.is_hex_address(obj.get('refundTo')) else default
 
 @app.get("/hello")
 def hello_world():
     return "<h2>Hello, World!</h2>"
 
 
-async def process_request_api1(content, handler):
+async def process_request_api1(content: dict, handler: callable) -> dict:
     logger.debug(content)
     oracle_request = content['meta']['oracleRequest']
     log_address = content['logAddress']
@@ -136,66 +133,70 @@ async def process_request_api1(content, handler):
         "tx1": process_refund
     }
 
-async def json_handler(obj):
+async def json_handler(obj: dict) -> dict:
     logger.debug("running json_handler")
-    if obj.get('service') is None or obj.get('data') is None:
+    service = obj.get('service')
+    data = obj.get('data')
+    if service is None or data is None:
         return {}
-    if obj['service'] == 'ping' and obj['data'][:4] != 'cid:':
-        return obj['data']
-    if obj['service'] == 'container-pull':
-        image = obj['data']
-        name = image.replace("/", "_")
-        logger.debug('processing docker')
-        client = docker_connect()
+
+    if service == 'container-pull':
+        return await handle_container_pull(data)
+
+    if isinstance(data, str) and data.startswith("cid:"):
+        data = await handle_cid(data[4:])
+
+    if service == 'ping':
+        return data
+
+    response = requests.post(f"http://{service}", json=data).json()
+    if obj.get('abi') == "ipfs":
+        ipfs_client = ipfs_connect()
+        return "cid:" + ipfs_client.dag.put(
+            StringIO(json.dumps(response))
+        )['Cid']["/"]
+    return response
+
+async def handle_container_pull(image: str) -> dict:
+    name = image.replace("/", "_")
+    logger.debug('Processing Docker image pull')
+
+    client = docker_connect()
+    if name not in [c.name for c in client.containers.list(all=True)]:
         try:
             client.images.get(image)
         except docker.errors.APIError:
-            logger.warning('Error pulling data image')
+            logger.warning('Error pulling data image, attempting pull')
             client.images.pull(image)
         try:
-            if name not in client.containers.list(
-                    all=True, filters={'name': name }
-            ):
-                container = client.containers.run(
-                    image, detach=True,
-                    name=name,
-                    network='blockchain-hpc')
-                logger.debug(container)
+            client.containers.run(
+                image, detach=True, name=name, network='blockchain-hpc'
+            )
         except docker.errors.APIError:
             logger.warning('Error running data image')
-        return {}
-    if isinstance(obj['data'], str) and obj['data'][:4] == "cid:":
-        logger.debug('processing CID')
-        cid = obj['data'][4:]
-        ipfs_client = ipfs_connect()
-        data = ipfs_client.dag.get(obj['data'][4:]).as_json()
-        logger.debug(data)
-    else:
-        data = obj['data']
-    if obj['service'] != "ping":
-        r = requests.post(f"http://{obj['service']}", json=data).json()
-    else:
-        r = data
-    if obj.get('abi') == "ipfs":
-        return "cid:" + ipfs_client.dag.put(
-            StringIO(json.dumps(r))
-        )['Cid']["/"]
-    return r
+
+    return {}
+
+async def handle_cid(cid: str) -> dict:
+    logger.debug('Processing CID')
+    ipfs_client = ipfs_connect()
+    data = ipfs_client.dag.get(cid).as_json()
+    logger.debug(data)
+    return data
 
 @app.post("/api1")
-async def api1(request: Request):
+async def api1(request: Request) -> dict:
     return await process_request_api1(await request.json(), json_handler)
 
 @app.post("/api1-handler")
-async def api1_handler(request: Request):
+async def api1_handler(request: Request) -> dict:
     return await json_handler(await request.json())
 
 @app.post("/api1-test")
-async def api1_test(request: Request):
+async def api1_test(request: Request) -> dict:
     async def handler(obj):
         return obj.get('data', '')
     return await process_request_api1(await request.json(), handler)
-
 
 @app.post("/api0")
 async def api0(request: Request):
