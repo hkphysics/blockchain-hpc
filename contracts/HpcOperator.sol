@@ -5,6 +5,7 @@ pragma solidity 0.8.19;
 import "@chainlink/contracts/src/v0.8/operatorforwarder/AuthorizedReceiver.sol";
 import "@chainlink/contracts/src/v0.8/operatorforwarder/LinkTokenReceiver.sol";
 import "./vendor/ConfirmedOwnerUpgradeable.sol";
+import "./interface/IHpcOperator.sol";
 import "@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/OperatorInterface.sol";
 import "@chainlink/contracts/src/v0.8/shared/interfaces/IOwnable.sol";
@@ -24,7 +25,7 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
  */
 contract HpcOperator is AuthorizedReceiver,
 ConfirmedOwnerUpgradeable, LinkTokenReceiver,
-OperatorInterface, IWithdrawal {
+IHpcOperator, IWithdrawal {
   using AddressUpgradeable for address;
 
   struct Commitment {
