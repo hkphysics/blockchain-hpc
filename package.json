@@ -47,8 +47,8 @@
   },
   "scripts": {
     "build": "hardhat compile",
-    "up": "docker-compose up",
-    "down": "docker-compose down",
+    "up": "docker compose up",
+    "down": "docker compose down",
     "lint": "solhint contracts/**/*.sol ; eslint scripts/**/*.ts",
     "test": "hardhat test"
   }
